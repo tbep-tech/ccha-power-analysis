@@ -78,4 +78,46 @@ column(12,
 knitr::include_graphics(here('figs/subsampex.jpg'))
 ```
 
+## Richness estimates
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/richex.jpg'),
+      output_name = "richness",
+      output_extension = ".jpg",
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/richex.jpg'))
+```
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/richperex.jpg'),
+      output_name = "richnessper",
+      output_extension = ".jpg",
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/richperex.jpg'))
+```
+
 <script type="text/javascript" src="js/iframeResizer.contentWindow.min.js"></script>

@@ -15,6 +15,9 @@ fml <- "roboto"
 showtext_auto()
 showtext_opts(dpi = 400)
 
+# to remove from analysis
+rmv <- c("Unknown", "Woody Debris, none/detritus")
+
 # relative reduction in effort --------------------------------------------
 
 toplo <- tibble(
@@ -137,28 +140,74 @@ dev.off()
 
 # richness estimates ------------------------------------------------------
 
-# rchests <- downsmps %>%  
-#   mutate(
-#     spprch = map(downsmp, function(downsmp){
-#       
-#       downsmp %>% 
-#         filter(!species %in% rmv) %>% 
-#         pull(species) %>% 
-#         unique %>% 
-#         length
-#       
-#     })
-#   )
-# 
-# toplo <- rchests %>% 
-#   select(-downsmp) %>%
-#   unnest('spprch') %>% 
-#   group_by(site, sample, sampint) %>% 
-#   summarise(spprch = mean(spprch), .groups = 'drop')
-# 
-# ggplot(toplo, aes(x = sampint, y = spprch, color = sample, group = sample, fill= sample)) + 
-#   # geom_line() +
-#   geom_point() +
-#   facet_wrap(~site) +
-#   geom_smooth(se = F)
+rchests <- downsmps %>%
+  mutate(
+    spprch = map(downsmp, function(downsmp){
 
+      downsmp %>%
+        filter(!species %in% rmv) %>%
+        pull(species) %>%
+        unique %>%
+        length
+
+    })
+  ) %>% 
+  select(-downsmp) %>%
+  unnest('spprch') %>%
+  group_by(site, sample, sampint) %>%
+  summarise(spprch = mean(spprch), .groups = 'drop')
+
+toplo <- rchests %>% 
+  mutate(
+    sample = factor(paste('Year', sample))
+  ) %>% 
+  group_by(site, sample) %>% 
+  mutate(
+    per = 100 * spprch / max(spprch)
+  ) %>% 
+  ungroup()
+
+cols <- c('#958984', '#00806E')
+
+thm <- theme_ipsum(base_family = fml) +
+  theme(
+    panel.grid.minor = element_blank(),
+    # panel.grid.major.x = element_blank(),
+    axis.title.x = element_text(hjust = 0.5, size = 12),
+    axis.title.y = element_text(hjust = 0.5, size = 12),
+    legend.position = 'top'
+  )
+
+p1 <- ggplot(toplo, aes(x = sampint, y = spprch, group = sample, color = sample)) +
+  geom_point(alpha = 0.6) +
+  scale_x_continuous() + 
+  facet_wrap(~site) +
+  geom_smooth(se = F) + 
+  scale_color_manual(values = cols) +
+  thm + 
+  labs(
+    y = 'Species richness estimate', 
+    x = 'Sampling distance every x meters', 
+    color = NULL
+  )
+
+p2 <- ggplot(toplo, aes(x = sampint, y = per, group = sample, color = sample)) +
+  geom_point(alpha = 0.6) +
+  scale_x_continuous() + 
+  facet_wrap(~site) +
+  geom_smooth(se = F) + 
+  scale_color_manual(values = cols) +
+  thm + 
+  labs(
+    y = 'Species richness estimate % of total', 
+    x = 'Sampling distance every x meters', 
+    color = NULL
+  )
+
+jpeg(here('figs/richex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
+print(p1)
+dev.off()
+
+jpeg(here('figs/richperex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
+print(p2)
+dev.off()
