@@ -1,0 +1,81 @@
+---
+output: 
+  html_document
+css: styles.css
+---
+
+```{r setup, message = F, warning = F, results = 'hide', echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F, echo = F, fig.path = 'figs/', fig.align = 'center')
+
+library(downloadthis)
+library(here)
+library(shiny)
+
+source(here('R/funcs.R'))
+source(here('R/figs.R'))
+```
+
+# {.tabset .tabset-fade .tabset-pills}
+
+## Overview
+
+The CCHA power analysis evaluates the effect of reducing sampling effort for vegetation transects at all long-term monitoring sites in Tampa Bay.  Currently, sampling is conducted every half meter and the power analysis evaluates the effect of reduced effort up to sampling every ten meters, or a 95% reduction from the current effort.  Scenarios evaluating more than 50% (1 meter sampling) or 66% (1.5 meter sampling) reduction in effort are unrealistic, but still useful to understand the effects on quantitative measures of habitat.  These measures include:
+
+1. Total species richness at a site
+1. Total species richness at a site by vegetation zone
+1. Species frequency occurrence at a site
+1. Species frequency occurrence at a site by vegetation zone
+1. Vegetation zone distances by site
+1. Elevation range at which 95% of key species occur (e.g., mangroves) 
+
+The relative reduction in effort associated with each half-meter increase along a transect is shown below. 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/releff.jpg'),
+      output_name = "relative-effort",
+      output_extension = ".jpg",
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r, out.width = '80%'}
+knitr::include_graphics(here('figs/releff.jpg'))
+```
+
+## Sub-sampling scheme
+
+All existing CCHA vegetation surveys were sub-sampled from the existing effort of sample plots every half meter.  The plot below shows an example of the sub-sampling scheme, where effort was reduced in increments of a half meter, starting from the complete survey to an upper limit of sampling every ten meters.  For simplicity, the plot shows sub-sampling up to every three meters for a hypothetical 30 meter transect (transect exceed 100 meters at all site).  
+
+The existing surveys were sub-sampled at the specified meter interval for every unique subset (or replicate) that was possible.  For example, two unique replicates can be created with sub-sampling every one meter, three every 1.5 meters, etc.  
+
+The large red points show which of the existing survey points were sub-sampled for the specified sub-sample distance.  For each site and sample year, the vegetation transect was sub-sampled following the scheme below (sub-sampling up to ten meters) and relevant habitat summaries were estimated.  The top row represents the complete transect, or the "truth". 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/subsampex.jpg'),
+      output_name = "subsample-ex",
+      output_extension = ".jpg",
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/subsampex.jpg'))
+```
+
+<script type="text/javascript" src="js/iframeResizer.contentWindow.min.js"></script>
