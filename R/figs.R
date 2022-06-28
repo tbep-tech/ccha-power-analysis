@@ -1,9 +1,12 @@
 library(tidyverse)
 library(purrr)
 library(here)
-library(showtext)
 library(grid)
 library(hrbrthemes)
+library(showtext)
+
+# downsampled vegetation surveys
+data(downsmps)
 
 # get font
 font_add_google("Roboto", "roboto")#, regular = 'C:/Windows/Fonts/Roboto.ttf')
@@ -131,3 +134,31 @@ jpeg(here('figs/subsampex.jpg'), height = 5, width = 8, family = fml, units = 'i
 print(p)
 grid.text('Sub-sample distance (m)', x = unit(0.99, "npc"), y = unit(0.5, "npc"), rot = 270)
 dev.off()
+
+# richness estimates ------------------------------------------------------
+
+# rchests <- downsmps %>%  
+#   mutate(
+#     spprch = map(downsmp, function(downsmp){
+#       
+#       downsmp %>% 
+#         filter(!species %in% rmv) %>% 
+#         pull(species) %>% 
+#         unique %>% 
+#         length
+#       
+#     })
+#   )
+# 
+# toplo <- rchests %>% 
+#   select(-downsmp) %>%
+#   unnest('spprch') %>% 
+#   group_by(site, sample, sampint) %>% 
+#   summarise(spprch = mean(spprch), .groups = 'drop')
+# 
+# ggplot(toplo, aes(x = sampint, y = spprch, color = sample, group = sample, fill= sample)) + 
+#   # geom_line() +
+#   geom_point() +
+#   facet_wrap(~site) +
+#   geom_smooth(se = F)
+
