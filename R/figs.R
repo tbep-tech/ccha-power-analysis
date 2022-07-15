@@ -157,7 +157,11 @@ rchests <- downsmps %>%
   select(-downsmp) %>%
   unnest('spprch') %>%
   group_by(site, sample, sampint) %>%
-  summarise(spprch = mean(spprch), .groups = 'drop')
+  summarise(
+    spprchvar = var(spprch),
+    spprch = mean(spprch), 
+    .groups = 'drop'
+    )
 
 toplo <- rchests %>% 
   mutate(
@@ -181,7 +185,7 @@ thm <- theme_ipsum(base_family = fml) +
   )
 
 p1 <- ggplot(toplo, aes(x = sampint, y = spprch, group = sample, color = sample)) +
-  geom_point(alpha = 0.6) +
+  geom_point(alpha = 0.6, aes(size = spprchvar)) +
   scale_x_continuous() + 
   facet_wrap(~site) +
   geom_smooth(se = F) + 
@@ -189,12 +193,13 @@ p1 <- ggplot(toplo, aes(x = sampint, y = spprch, group = sample, color = sample)
   thm + 
   labs(
     y = 'Species richness estimate', 
-    x = 'Sampling distance every x meters', 
+    x = 'Sampling distance every x meters',  
+    size = 'Variance with random subsample',
     color = NULL
   )
 
 p2 <- ggplot(toplo, aes(x = sampint, y = per, group = sample, color = sample)) +
-  geom_point(alpha = 0.6) +
+  geom_point(alpha = 0.6, aes(size = spprchvar)) +
   scale_x_continuous() + 
   facet_wrap(~site) +
   geom_smooth(se = F) + 
@@ -203,6 +208,7 @@ p2 <- ggplot(toplo, aes(x = sampint, y = per, group = sample, color = sample)) +
   labs(
     y = 'Species richness estimate, % of total', 
     x = 'Sampling distance every x meters', 
+    size = 'Variance with random subsample',
     color = NULL
   )
 
@@ -369,3 +375,69 @@ jpeg(here('figs/richzonesum.jpg'), height = 8, width = 12, family = fml, units =
 print(p3)
 dev.off()
 
+# frequency occurrence by sites -------------------------------------------
+
+foests <- downsmps %>%
+  mutate(
+    foest = map(downsmp, function(downsmp){
+      
+      downsmp %>% 
+        filter(!species %in% rmv) %>% 
+        select(meter, species, pcent_basal_cover) %>% 
+        mutate(
+          pa = ifelse(pcent_basal_cover > 0, 1, 0)
+        ) %>%
+        select(-pcent_basal_cover) %>% 
+        mutate(cnt = length(unique(meter))) %>% 
+        unique %>%
+        group_by(species) %>% 
+        summarise(
+          foest = sum(pa) / unique(cnt)
+        )
+      
+    })
+  ) %>% 
+  select(-downsmp) %>%
+  unnest('foest') %>%
+  group_by(site, sample, sampint, species) %>%
+  summarise(
+    foestvar = var(foest),
+    foest = mean(foest), 
+    .groups = 'drop'
+  )
+
+toplo <- foests %>% 
+  mutate(
+    sample = factor(paste('Year', sample))
+  ) %>% 
+  unite('samplespecies', sample, species, remove = F) 
+# filter(species == 'Avicennia germinans')
+
+cols <- c('#958984', '#00806E')
+
+thm <- theme_ipsum(base_family = fml) +
+  theme(
+    panel.grid.minor = element_blank(),
+    # panel.grid.major.x = element_blank(),
+    axis.title.x = element_text(hjust = 0.5, size = 12),
+    axis.title.y = element_text(hjust = 0.5, size = 12),
+    legend.position = 'top'
+  )
+
+p1 <- ggplot(toplo, aes(x = sampint, y = foest, group = samplespecies, color = sample)) +
+  geom_point(alpha = 0.6, aes(size = foestvar)) +
+  scale_x_continuous() + 
+  facet_wrap(~site) +
+  geom_line() +  
+  scale_color_manual(values = cols) +
+  thm + 
+  labs(
+    y = 'Species richness estimate', 
+    x = 'Sampling distance every x meters', 
+    size = 'Variance with random subsample',
+    color = NULL
+  )
+
+jpeg(here('figs/foex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
+print(p1)
+dev.off()

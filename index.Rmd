@@ -12,7 +12,7 @@ library(here)
 library(shiny)
 
 source(here('R/funcs.R'))
-source(here('R/figs.R'))
+# source(here('R/figs.R'))
 ```
 
 # {.tabset .tabset-fade .tabset-pills}
@@ -35,8 +35,6 @@ column(12,
   column(3, 
     download_file(
       path = here('figs/releff.jpg'),
-      output_name = "relative-effort",
-      output_extension = ".jpg",
       button_label = "Download plot",
       button_type = "warning",
       has_icon = TRUE,
@@ -65,8 +63,6 @@ column(12,
   column(3, 
     download_file(
       path = here('figs/subsampex.jpg'),
-      output_name = "subsample-ex",
-      output_extension = ".jpg",
       button_label = "Download plot",
       button_type = "warning",
       has_icon = TRUE,
@@ -80,17 +76,17 @@ column(12,
 knitr::include_graphics(here('figs/subsampex.jpg'))
 ```
 
-## Richness estimates
+## Summaries {.tabset .tabset-dropdown}
 
-These plots show the effect of down-sampling on richness estimates at each site, grouped by year of sampling.  The top plot shows points as the average estimate at each down-sampled survey for the sampling distance shown on the x-axis.  The lines are polynomial smooths to show the trend.  
+### Richness estimates
+
+These plots show the effect of down-sampling on richness estimates at each site, grouped by year of sampling.  The top plot shows points as the average estimate at each down-sampled survey for the sampling distance shown on the x-axis.  The lines are polynomial smooths to show the trend.  The size of each point is in proportion to the variance of the species richness estimate for each random sub-sample at the specified level of sampling.  
 
 ```{r}
 column(12, 
   column(3, 
     download_file(
       path = here('figs/richex.jpg'),
-      output_name = "richness",
-      output_extension = ".jpg",
       button_label = "Download plot",
       button_type = "warning",
       has_icon = TRUE,
@@ -111,8 +107,6 @@ column(12,
   column(3, 
     download_file(
       path = here('figs/richperex.jpg'),
-      output_name = "richnessper",
-      output_extension = ".jpg",
       button_label = "Download plot",
       button_type = "warning",
       has_icon = TRUE,
@@ -126,17 +120,15 @@ column(12,
 knitr::include_graphics(here('figs/richperex.jpg'))
 ```
 
-## Richness estimates by zone
+### Richness estimates by zone
 
-These plots show richness estimates for different zones with a reduction of sample effort.  The lines show the estimated reduction in the richness estimate for each site and the thick line is the average trend across all sites for each zone.  The panels are arranged based on the greatest percent reduction in richness from full to minimum effort across all sites in a zone.
+These plots show richness estimates for different zones with a reduction of sample effort.  The lines show the estimated reduction in the richness estimate for each site and the thick line is the average trend across all sites for each zone (points are not shown to reduce clutter).  The panels are arranged based on the greatest percent reduction in richness from full to minimum effort across all sites in a zone.
 
 ```{r}
 column(12, 
   column(3, 
     download_file(
       path = here('figs/richzone.jpg'),
-      output_name = "richnesszone",
-      output_extension = ".jpg",
       button_label = "Download plot",
       button_type = "warning",
       has_icon = TRUE,
@@ -157,8 +149,6 @@ column(12,
   column(3, 
     download_file(
       path = here('figs/richzoneper.jpg'),
-      output_name = "richnesszoneper",
-      output_extension = ".jpg",
       button_label = "Download plot",
       button_type = "warning",
       has_icon = TRUE,
@@ -179,8 +169,6 @@ column(12,
   column(3, 
     download_file(
       path = here('figs/richzonesum.jpg'),
-      output_name = "richnesszonesum",
-      output_extension = ".jpg",
       button_label = "Download plot",
       button_type = "warning",
       has_icon = TRUE,
@@ -192,6 +180,30 @@ column(12,
 
 ```{r}
 knitr::include_graphics(here('figs/richzonesum.jpg'))
+```
+
+Plot total loss vs average richness in single plot. 
+
+### Frequency occurrence estimates
+
+No change, but variance increases.
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/foex.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/foex.jpg'))
 ```
 
 <script type="text/javascript" src="js/iframeResizer.contentWindow.min.js"></script>
