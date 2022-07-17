@@ -353,7 +353,7 @@ p3 <- ggplot(toplo2, aes(x = sampint, y = perloess, group = zone_name, color = z
   geom_text_repel(data = lbs, aes(label = zone_name), direction = 'y', xlim = c(0.5, 12.5), hjust = 0, nudge_x = 0.5, show.legend = F) + 
   thm + 
   scale_color_manual(values = colfun(length(unique(toplo2$zone_name)))) +
-  scale_size(range = c(0.5, 1.8), breaks = brks) +
+  scale_size(range = c(0.4, 2), breaks = brks) +
   scale_alpha_continuous(breaks = brks, range = c(0.6, 1)) +
   guides(color = 'none') +
   labs(
