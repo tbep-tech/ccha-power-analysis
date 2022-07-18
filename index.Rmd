@@ -245,7 +245,6 @@ knitr::include_graphics(here('figs/foex.jpg'))
 
 Variance of frequency occurrence with each random subsample shows an increase with a reduction in sample effort.  The increase in the variance of frequency occurrence depends on the actual frequency occurrence estimate with complete sample effort.  The model below shows that species with higher frequency occurrence will have greater variation in the estimate with reductions in sample effort.  The x-axis shows the initial frequency occurrence and the y-axis shows the final variance at 10 m sampling.
 
-
 ```{r}
 column(12, 
   column(3, 
@@ -264,13 +263,77 @@ column(12,
 knitr::include_graphics(here('figs/fovarex.jpg'))
 ```
 
+### Zone counts and distances
+
+Estimates of the counts and distances for each zone along the transects are shown below for reductions in sample effort.  The first plot shows the number of unique zones identified with down-sampling.  All zones are identified at each site for all levels of sample effort.
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/zonecnt.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/zonecnt.jpg'))
+```
+
+The estimated length of each zone at each site is shown below with reductions in sample effort.  Each line represents a unique zone.  Estimated zone lengths decrease slightly with reduced effort.  Zones with zero length only have one sample, where distance is calculated as the difference from the first sample point and last sample point in a zone. Points are sized by the variance of the estimates across the random subsamples at level of sample effort. 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/zonedst.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/zonedst.jpg'))
+```
+
+The variance (or precision) of the distance estimates increases with reductions in effort, but the increase is not linear.  An example for Big Bend - TECO is shown below.  Although variance increase across the zones, the variance estimates fall to zero when the actual zone distance (facet label shown in meters) is divisible by the sample interval with no remainder.  Points of maximum variance are between intervals with no remainder. 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/zonevarex.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/zonevarex.jpg'))
+```
+
 ## Conclusions
 
 * Richness estimates for a site are reduced with lower sample effort
 * The amount of reduction in the richness estimated was weakly associated with total species richness at a site
 * Richness estimates for a zone are reduced with lower sample effort
 * Richness estimates will be systematically lower with reduced effort for zones with overall higher richness.  These include zones...
-* Frequency occurrence estimates for individual species will not be systemetically different at lower sample effort, but the estimates are imprecise
+* Frequency occurrence estimates for individual species will not be systematically different at lower sample effort, but the estimates are imprecise
 * Species with higher frequency occurrence will have less precise estimates with reduced effort compared to those with lower frequency occurrence
+* Zone identification at each site is not affected by sample effort, although distance estimates decrease slightly.  
+* Precision of the distance estimates for each zone decreases with reductions in sample effort, but the decrease is not linear and is affected by the actual zone length and sample interval
 
 <script type="text/javascript" src="js/iframeResizer.contentWindow.min.js"></script>

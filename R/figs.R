@@ -626,3 +626,107 @@ dev.off()
 jpeg(here('figs/fovarex.jpg'), height = 6, width = 6.5, family = fml, units = 'in', res = 400)
 print(p2)
 dev.off()
+
+
+# zone count and distance estimates -----------------------------------------------------------
+
+zonedsts <- downsmps %>%
+  filter(sample == 1) %>% 
+  mutate(
+    zonedst = purrr::map(downsmp, function(x){
+      
+      x %>% 
+        select(zone_name, zone, meter) %>% 
+        unique %>% 
+        unite('zonefct', zone, zone_name, sep = ': ', remove = F) %>%
+        group_by(zonefct, zone_name) %>% 
+        summarize(
+          dist = max(meter) - min(meter), 
+          .groups = 'drop'
+        ) 
+      
+    })
+  ) %>% 
+  select(-downsmp) %>% 
+  unnest(zonedst)
+
+toplo1 <- zonedsts %>% 
+  group_by(site, sampint) %>% 
+  summarize(
+    zonecnt = n_distinct(zonefct), 
+    .groups = 'drop'
+  )
+
+thm <- theme_ipsum(base_family = fml) +
+  theme(
+    panel.grid.minor = element_blank(),
+    # panel.grid.major.x = element_blank(),
+    axis.title.x = element_text(hjust = 0.5, size = 12),
+    axis.title.y = element_text(hjust = 0.5, size = 12),
+    legend.position = 'top'
+  )
+
+p1 <- ggplot(toplo1, aes(x = sampint, y = zonecnt)) + 
+  geom_line() + 
+  geom_point() + 
+  facet_wrap(~site) + 
+  thm + 
+  labs(
+    y = 'Total number of unique zones', 
+    x = 'Sampling distance every x meters',  
+  )
+
+toplo2 <- zonedsts %>% 
+  group_by(site, sampint, zonefct) %>% 
+  summarize(
+    meandist = mean(dist, na.rm = T), 
+    vardist = var(dist, na.rm = T),
+    .groups = 'drop'
+  )
+
+p2 <- ggplot(toplo2, aes(x = sampint, y = meandist, group = zonefct)) + 
+  geom_line() + 
+  geom_point(aes(size = vardist)) + 
+  facet_wrap(~site) + 
+  thm +
+  labs(
+    y = 'Average zone distance', 
+    x = 'Sampling distance every x meters',  
+    size = 'Variance with random subsample', 
+    caption = 'Zones with zero distance have one sample point'
+  )
+
+toplo3 <- toplo2 %>% 
+  filter(site == 'Big Bend - TECO')
+
+toplo3 <- toplo3 %>% 
+  filter(sampint == 0.5) %>% 
+  mutate(meandist = meandist + 0.5) %>% 
+  unite(zonefctlab, c("zonefct", "meandist"), remove = F, sep = ', ') %>% 
+  mutate(zonefctlab = paste(zonefctlab, 'm')) %>% 
+  select(-vardist, -sampint) %>% 
+  full_join(toplo3, by = c('site', 'zonefct')) 
+
+p3 <- ggplot(toplo3, aes(x = sampint, y = vardist)) + 
+  geom_point() + 
+  geom_line() +
+  facet_wrap(~zonefctlab, scales = 'free_y') +
+  thm +
+  theme(strip.text = element_text(size = 8)) +
+  labs(
+    y = 'Variance across sub-samples', 
+    x = 'Sampling distance every x meters',  
+    subtitle = 'Big Bend - Teco'
+  )
+
+jpeg(here('figs/zonecnt.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
+print(p1)
+dev.off()
+
+jpeg(here('figs/zonedst.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
+print(p2)
+dev.off()
+
+jpeg(here('figs/zonevarex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
+print(p3)
+dev.off()
