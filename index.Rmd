@@ -202,7 +202,25 @@ column(12,
 knitr::include_graphics(here('figs/richzonesum.jpg'))
 ```
 
-Plot total loss vs average richness in single plot. 
+There is strong evidence that a greater reduction in species richness is expected at zones with higher richness. 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/richzoneloss.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r, out.width = '80%'}
+knitr::include_graphics(here('figs/richzoneloss.jpg'))
+```
 
 ### Frequency occurrence estimates
 

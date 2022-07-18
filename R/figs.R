@@ -230,6 +230,16 @@ toplo1 <- toplo1 %>%
     site = factor(site, levels = levs)
   )
 
+thm <- theme_ipsum(base_family = fml) +
+  theme(
+    panel.grid.minor = element_blank(),
+    # panel.grid.major.x = element_blank(),
+    axis.title.x = element_text(hjust = 0.5, size = 12),
+    axis.title.y = element_text(hjust = 0.5, size = 12),
+    legend.position = 'top'
+  )
+
+cols <- c('#958984', '#00806E')
 
 p1 <- ggplot(toplo1, aes(x = sampint, y = spprch, group = sample, color = sample)) +
   geom_point(alpha = 0.6, aes(size = spprchvar)) +
@@ -333,7 +343,6 @@ dev.off()
 jpeg(here('figs/richloss.jpg'), height = 6, width = 6.5, family = fml, units = 'in', res = 400)
 print(p3)
 dev.off()
-
 
 # richness estimates by zone ------------------------------------------------------------------
 
@@ -478,6 +487,31 @@ p3 <- ggplot(toplo2, aes(x = sampint, y = perloess, group = zone_name, color = z
     size = 'Mean richness across sites, years'
   )
 
+toplo3 <- lbs %>% 
+  mutate(
+    totloss = 100 - perloess
+  )
+
+mod <- lm(totloss ~ meanrich, data = toplo3) %>% 
+  summary() %>% 
+  .$coefficients %>% 
+  .[2, 4] %>% 
+  format.pval(., eps = 0.05)
+
+p4 <- ggplot(toplo3, aes(x = meanrich, y = totloss)) + 
+  geom_point(aes(color = zone_name)) + 
+  geom_text_repel(aes(label = zone_name, color = zone_name), size = 2.5, segment.color = NA) +
+  scale_color_manual(values = colfun(length(unique(toplo2$zone_name)))) +
+  geom_smooth(method = 'lm') + 
+  guides(color = 'none') +
+  thm + 
+  labs(
+    x = 'Average species richness by zone', 
+    y = 'Total percent loss from 0.5 m to 10 m sampling',
+    subtitle = 'Total loss with reduced sampling as a function of average richness', 
+    caption = paste('Model significant, p ', mod)
+  )
+
 jpeg(here('figs/richzone.jpg'), height = 11, width = 11, family = fml, units = 'in', res = 400)
 print(p1)
 dev.off()
@@ -488,6 +522,10 @@ dev.off()
 
 jpeg(here('figs/richzonesum.jpg'), height = 8, width = 12, family = fml, units = 'in', res = 400)
 print(p3)
+dev.off()
+
+jpeg(here('figs/richzoneloss.jpg'), height = 6, width = 6.5, family = fml, units = 'in', res = 400)
+print(p4)
 dev.off()
 
 # frequency occurrence by sites -------------------------------------------
