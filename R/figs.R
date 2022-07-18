@@ -142,16 +142,17 @@ dev.off()
 
 # richness estimates ------------------------------------------------------
 
+
 rchests <- downsmps %>%
   mutate(
     spprch = map(downsmp, function(downsmp){
-
+      
       downsmp %>%
         filter(!species %in% rmv) %>%
         pull(species) %>%
         unique %>%
         length
-
+      
     })
   ) %>% 
   select(-downsmp) %>%
@@ -161,7 +162,7 @@ rchests <- downsmps %>%
     spprchvar = var(spprch),
     spprch = mean(spprch), 
     .groups = 'drop'
-    )
+  )
 
 toplo <- rchests %>% 
   mutate(
@@ -171,20 +172,66 @@ toplo <- rchests %>%
   mutate(
     per = 100 * spprch / max(spprch)
   ) %>% 
-  ungroup()
-
-cols <- c('#958984', '#00806E')
-
-thm <- theme_ipsum(base_family = fml) +
-  theme(
-    panel.grid.minor = element_blank(),
-    # panel.grid.major.x = element_blank(),
-    axis.title.x = element_text(hjust = 0.5, size = 12),
-    axis.title.y = element_text(hjust = 0.5, size = 12),
-    legend.position = 'top'
+  group_by(site) %>% 
+  nest() %>% 
+  mutate(
+    lofit = purrr::map(data, function(x){
+      
+      prddat <- x %>% 
+        select(sampint) %>% 
+        unique
+      
+      spprchloess <- loess(spprch ~ sampint, x) %>% 
+        predict(newdat = prddat)
+      
+      perloess <- loess(per ~ sampint, x) %>% 
+        predict(newdata = prddat)
+      
+      meanrich <- x %>% 
+        group_by(sample) %>% 
+        filter(sampint == 0.5) %>% 
+        pull(spprch) %>% 
+        mean()
+      
+      out <- tibble(
+        meanrich = meanrich, 
+        sampint = prddat$sampint,
+        spprchloess = spprchloess, 
+        perloess = perloess
+      ) 
+      
+      return(out)
+      
+    })
   )
 
-p1 <- ggplot(toplo, aes(x = sampint, y = spprch, group = sample, color = sample)) +
+toplo1 <- toplo %>% 
+  select(-lofit) %>% 
+  unnest('data')
+
+toplo2 <- toplo %>% 
+  select(-data) %>% 
+  unnest('lofit')
+
+
+# get factor levels based on greatest reduction
+levs <- toplo2 %>% 
+  group_by(site) %>% 
+  summarise(
+    difv = max(perloess) - min(perloess), 
+    .groups = 'drop'
+  ) %>% 
+  arrange(difv) %>% 
+  pull(site) %>% 
+  rev
+
+toplo1 <- toplo1 %>% 
+  mutate(
+    site = factor(site, levels = levs)
+  )
+
+
+p1 <- ggplot(toplo1, aes(x = sampint, y = spprch, group = sample, color = sample)) +
   geom_point(alpha = 0.6, aes(size = spprchvar)) +
   scale_x_continuous() + 
   facet_wrap(~site) +
@@ -198,7 +245,7 @@ p1 <- ggplot(toplo, aes(x = sampint, y = spprch, group = sample, color = sample)
     color = NULL
   )
 
-p2 <- ggplot(toplo, aes(x = sampint, y = per, group = sample, color = sample)) +
+p2 <- ggplot(toplo1, aes(x = sampint, y = per, group = sample, color = sample)) +
   geom_point(alpha = 0.6, aes(size = spprchvar)) +
   scale_x_continuous() + 
   facet_wrap(~site) +
@@ -212,6 +259,69 @@ p2 <- ggplot(toplo, aes(x = sampint, y = per, group = sample, color = sample)) +
     color = NULL
   )
 
+tmp <- rchests %>% 
+  mutate(
+    sample = factor(paste('Year', sample))
+  ) %>% 
+  group_by(site, sample) %>% 
+  mutate(
+    per = 100 * spprch / max(spprch)
+  ) %>% 
+  nest() %>% 
+  mutate(
+    lofit = purrr::map(data, function(x){
+      
+      prddat <- x %>% 
+        select(sampint) %>% 
+        unique
+      
+      spprchloess <- loess(spprch ~ sampint, x) %>% 
+        predict(newdat = prddat)
+      
+      perloess <- loess(per ~ sampint, x) %>% 
+        predict(newdata = prddat)
+      
+      meanrich <- x %>% 
+        filter(sampint == 0.5) %>% 
+        pull(spprch) %>% 
+        mean()
+      
+      out <- tibble(
+        meanrich = meanrich, 
+        sampint = prddat$sampint,
+        spprchloess = spprchloess, 
+        perloess = perloess
+      ) 
+      
+      return(out)
+      
+    })
+  ) %>% 
+  select(-data) %>% 
+  unnest('lofit') %>% 
+  group_by(site, sample, meanrich) %>% 
+  summarise(
+    difv = max(perloess) - min(perloess), 
+    .groups = 'drop'
+  ) 
+
+mod <- lm(difv ~ meanrich, data = tmp) %>% 
+  summary() %>% 
+  .$coefficients %>% 
+  .[2, 4] %>% 
+  round(., 2)
+
+p3 <- ggplot(tmp, aes(x = meanrich, y = difv)) + 
+  geom_point() + 
+  stat_smooth(method = 'lm') + 
+  thm + 
+  labs(
+    x = 'Actual species richness', 
+    y = 'Total percent loss from 0.5 m to 10 m sampling',
+    subtitle = 'Total species loss with reduced sampling as a function of actual richness', 
+    caption = paste('Model insignificant, p = ', mod)
+  )
+
 jpeg(here('figs/richex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
 print(p1)
 dev.off()
@@ -219,6 +329,11 @@ dev.off()
 jpeg(here('figs/richperex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
 print(p2)
 dev.off()
+
+jpeg(here('figs/richloss.jpg'), height = 6, width = 6.5, family = fml, units = 'in', res = 400)
+print(p3)
+dev.off()
+
 
 # richness estimates by zone ------------------------------------------------------------------
 

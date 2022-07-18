@@ -12,7 +12,7 @@ library(here)
 library(shiny)
 
 source(here('R/funcs.R'))
-source(here('R/figs.R'))
+# source(here('R/figs.R'))
 ```
 
 # {.tabset .tabset-fade .tabset-pills}
@@ -80,7 +80,7 @@ knitr::include_graphics(here('figs/subsampex.jpg'))
 
 ### Richness estimates
 
-These plots show the effect of down-sampling on richness estimates at each site, grouped by year of sampling.  The top plot shows points as the average estimate at each down-sampled survey for the sampling distance shown on the x-axis.  The lines are polynomial smooths to show the trend.  The size of each point is in proportion to the variance of the species richness estimate for each random sub-sample at the specified level of sampling.  
+These plots show the effect of down-sampling on richness estimates at each site, grouped by year of sampling.  The top plot shows points as the average estimate at each down-sampled survey for the sampling distance shown on the x-axis.  The lines are polynomial smooths to show the trend.  The size of each point is in proportion to the variance of the species richness estimate for each random sub-sample at the specified level of sampling.  Facets are arranged based on the greatest reduction in species richness as a percentage of the total.
 
 ```{r}
 column(12, 
@@ -118,6 +118,26 @@ column(12,
 
 ```{r}
 knitr::include_graphics(here('figs/richperex.jpg'))
+```
+
+There is some evidence that a greater reduction in species richness is expected at sites with higher richness, although the model is insignificant. 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/richloss.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r, out.width = '70%'}
+knitr::include_graphics(here('figs/richloss.jpg'))
 ```
 
 ### Richness estimates by zone
