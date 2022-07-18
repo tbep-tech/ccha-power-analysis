@@ -587,10 +587,42 @@ p1 <- ggplot(toplo, aes(x = sampint, y = foest, group = samplespecies, color = s
   labs(
     y = 'Species richness estimate', 
     x = 'Sampling distance every x meters', 
-    size = 'Variance with random subsample',
+    size = 'Variance across random subsamples',
     color = NULL
+  )
+
+tmp1 <- toplo %>% 
+  filter(sampint == 0.5) %>% 
+  select(-sampint, -foestvar)
+tmp2 <- toplo %>% 
+  filter(sampint == 10) %>% 
+  select(-sampint, -foest)
+tmp <- inner_join(tmp1, tmp2, by = c('site', 'samplespecies', 'sample', 'species')) %>% 
+  na.omit()
+
+mod <- lm(log10(1 + foestvar) ~ log10(1 + foest), data = tmp) %>% 
+  summary() %>% 
+  .$coefficients %>% 
+  .[2, 4] %>% 
+  format.pval(., eps = 0.05)
+
+p2 <- ggplot(tmp, aes(x = foest, y = foestvar)) + 
+  geom_point() + 
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_smooth(method = 'lm') +
+  thm + 
+  labs(
+    x = 'Initial frequency occurrence', 
+    y = 'Final variance at 10 m sampling',
+    subtitle = 'Variance of frequency occurrence with reduced effort',
+    caption = paste('Model significant, p ', mod)
   )
 
 jpeg(here('figs/foex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
 print(p1)
+dev.off()
+
+jpeg(here('figs/fovarex.jpg'), height = 6, width = 6.5, family = fml, units = 'in', res = 400)
+print(p2)
 dev.off()

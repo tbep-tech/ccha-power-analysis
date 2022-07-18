@@ -24,7 +24,6 @@ The CCHA power analysis evaluates the effect of reducing sampling effort for veg
 1. Total species richness at a site
 1. Total species richness at a site by vegetation zone
 1. Species frequency occurrence at a site
-1. Species frequency occurrence at a site by vegetation zone
 1. Vegetation zone distances by site
 1. Elevation range at which 95% of key species occur (e.g., mangroves) 
 
@@ -182,7 +181,7 @@ column(12,
 knitr::include_graphics(here('figs/richzoneper.jpg'))
 ```
 
-This plot combines results from the previous.  The lines are each solid black line from the above plot as the average reduction in the richness estimates for all sites in each zone.  The opacity and line thickness is in proportion to the total species richness for all sites in a zone at full sampling effort.  
+This plot combines results from the previous.  The lines are each solid black line from the above plot as the average reduction in the richness estimates for all sites in each zone.  The line thickness is in proportion to the average total species richness for all sites in a zone at full sampling effort.  
 
 ```{r}
 column(12, 
@@ -224,7 +223,7 @@ knitr::include_graphics(here('figs/richzoneloss.jpg'))
 
 ### Frequency occurrence estimates
 
-No change, but variance increases.
+The plot below shows the estimated change in frequency occurrence with reduced sample effort at each site and sample year. Each line shows a different species (labels are not included to reduce plot clutter).  The points are sized in proportion to the variance across the random subsamples at the specified level of effort.   
 
 ```{r}
 column(12, 
@@ -243,5 +242,35 @@ column(12,
 ```{r}
 knitr::include_graphics(here('figs/foex.jpg'))
 ```
+
+Variance of frequency occurrence with each random subsample shows an increase with a reduction in sample effort.  The increase in the variance of frequency occurrence depends on the actual frequency occurrence estimate with complete sample effort.  The model below shows that species with higher frequency occurrence will have greater variation in the estimate with reductions in sample effort.  The x-axis shows the initial frequency occurrence and the y-axis shows the final variance at 10 m sampling.
+
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/fovarex.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r, out.width = '70%'}
+knitr::include_graphics(here('figs/fovarex.jpg'))
+```
+
+## Conclusions
+
+* Richness estimates for a site are reduced with lower sample effort
+* The amount of reduction in the richness estimated was weakly associated with total species richness at a site
+* Richness estimates for a zone are reduced with lower sample effort
+* Richness estimates will be systematically lower with reduced effort for zones with overall higher richness.  These include zones...
+* Frequency occurrence estimates for individual species will not be systemetically different at lower sample effort, but the estimates are imprecise
+* Species with higher frequency occurrence will have less precise estimates with reduced effort compared to those with lower frequency occurrence
 
 <script type="text/javascript" src="js/iframeResizer.contentWindow.min.js"></script>
