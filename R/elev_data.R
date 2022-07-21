@@ -4,10 +4,18 @@ library(googledrive)
 library(sf)
 library(mapview)
 library(readxl)
-library(ggrepel)
+library(leafem)
 
+# deauth all so it can build with gh actions
+drive_deauth()
+gs4_deauth()
+
+# polyline transect sf object
 load(url('https://github.com/tbep-tech/ccha-workflow/raw/main/data/tranloc.RData'))
 
+# transect start stop -------------------------------------------------------------------------
+
+# transect start stop locations to identify landward/waterward
 trnstrstp <- read_excel('T:/09_TECHNICAL_PROJECTS/CRITICAL_COASTAL_HABITAT_ASSESSMENT/04_BACKGROUND/OlderVersions/CCHA1_2_Transect_Start_End.xlsx', skip = 1) %>% 
   select(site = Site, matches('LAT|LONG')) %>% 
   pivot_longer(-site) %>% 
@@ -36,13 +44,10 @@ trnstrstp <- read_excel('T:/09_TECHNICAL_PROJECTS/CRITICAL_COASTAL_HABITAT_ASSES
     ylocft = st_coordinates(.)[, 2]
   )
 
-# deauth all so it can build with gh actions
-drive_deauth()
-gs4_deauth()
+# elevation data ------------------------------------------------------------------------------
 
+# data from google drive
 drv <- 'https://drive.google.com/drive/u/0/folders/1qZBKn2A5hJb8WXBeiKG4FeoEvIUWmRc5'
-
-# csv files must be opened/saved as spreadsheet in google sheets
 fls <- drive_ls(drv, type = 'spreadsheet') %>% 
   select(name, id) %>% 
   group_by(name, id) %>% 
@@ -62,93 +67,137 @@ fls <- drive_ls(drv, type = 'spreadsheet') %>%
     })
   )
 
-nms <- c("Big Bend TECO Elevation Survey", "Cockroach Bay_10_5_16",  "Fort_Desoto_survey_10_17_2016",
-         "Harbor_Palms_Park_Oldsmar_9_28_16", "Hidden Harbor Elevation Survey", 
-         "Little Manatee River Elevation Survey", "Mosaic Elevation Survey", 
-         "UTBP Elevation Survey", "Weedon_Island_site_9_21_2016" 
-)
-site <- c("Big Bend - TECO", "Cockroach Bay", "Fort DeSoto", "Harbor Palms", 
-          "Hidden Harbor", "Little Manatee River", "Mosaic", "Upper Tampa Bay Park", 
-          "Weedon Island")
-
-sitlk <- tibble(
-  name = nms, 
-  site = site
-)
-
-# ungroup
-# remove points not on the transects (seen in plot)
+# rename sites to match vegdat
+# remove points not on the transects or top measurements (seen in plot)
+# reorder points not in order (by visual inspection)
+# reverse those where start is not waterward side
 # projection is NAD 83State Plane (Florida west) EPSG 2882
 # estimate distance
 
-# these sites have locations in meters, need to convert to feet
-tocnv <- c('Harbor Palms', 'Weedon Island', 'Fort DeSoto', 'Cockroach Bay')
+sitlk <- list(
+  `Big Bend TECO Elevation Survey` = "Big Bend - TECO", 
+  `Cockroach Bay_10_5_16` = "Cockroach Bay", 
+  Fort_Desoto_survey_10_17_2016 = "Fort DeSoto", 
+  Harbor_Palms_Park_Oldsmar_9_28_16 = "Harbor Palms", 
+  `Hidden Harbor Elevation Survey` = "Hidden Harbor", 
+  `Little Manatee River Elevation Survey` = "Little Manatee River", 
+  `Mosaic Elevation Survey` = "Mosaic", 
+  `UTBP Elevation Survey` = "Upper Tampa Bay Park", 
+  Weedon_Island_site_9_21_2016 = "Weedon Island"
+  ) %>% 
+  enframe(name = 'name', value = 'site')
+
+# points to remove
+ptrmv <- list(
+  `Big Bend - TECO` = c('1105', '1106', '1107', '1108', '1109', '1110', '1111', '1112'),
+  `Cockroach Bay` = c('co_mon2top', 'co_mon1top'),
+  `Fort DeSoto` = c('fdmon1Top', 'fdmon2Top'),
+  `Harbor Palms` = c('HPmon2_Top', 'HPmon1_top'),
+  `Hidden Harbor` = c('1093'),
+  `Little Manatee River` = NA,
+  `Mosaic` = c('1', '2', '596', '597', '602', '603', '604', '605', '606'),
+  `Upper Tampa Bay Park` = NA,
+  `Weedon Island` = c('wiatop', 'wimon')
+  ) %>% 
+  enframe(name = 'site', value = 'ptrmv')
+
+# verify start direction from map, NA for asis
+ptord <- list(
+  `Big Bend - TECO` = as.character(c(1000:1081, 1101, 1082, 1102, 1083, 1084, 1103, 1104, 1085:1100)),
+  `Cockroach Bay` = NA,
+  `Fort DeSoto` = NA,
+  `Harbor Palms` = NA,
+  `Hidden Harbor` = NA,
+  `Little Manatee River` = NA,
+  `Mosaic` = as.character(c(599, 598, 500:517, 556:558, 518:555, 559:584, 586, 585, 587:595)),
+  `Upper Tampa Bay Park` = NA,
+  `Weedon Island` = NA
+  ) %>% 
+  enframe(name = 'site', value = 'ptord')
+
+# T indicates starting point is landward and needs to be reversd
+revtyp <- list(
+  `Big Bend - TECO` = T,
+  `Cockroach Bay` = F,
+  `Fort DeSoto` = T,
+  `Harbor Palms` = F,
+  `Hidden Harbor` = T,
+  `Little Manatee River` = F,
+  `Mosaic` = T,
+  `Upper Tampa Bay Park` = F,
+  `Weedon Island` = F
+  ) %>% 
+  enframe(name = 'site', value = 'revtyp')  
+
+# T indicates locations are in meters, need to be converted to ft
+cnvtyp <- list(
+  `Big Bend - TECO` = F,
+  `Cockroach Bay` = T,
+  `Fort DeSoto` = T,
+  `Harbor Palms` = T,
+  `Hidden Harbor` = F,
+  `Little Manatee River` = F,
+  `Mosaic` = F,
+  `Upper Tampa Bay Park` = F,
+  `Weedon Island` = T
+  ) %>% 
+  enframe(name = 'site', value = 'cnvtyp') 
 
 eledat <- fls %>% 
   left_join(sitlk, by = 'name') %>% 
   ungroup() %>% 
   select(site, data) %>%
-  unnest('data') %>% 
-  filter(
-    !(site == 'Big Bend - TECO' & point %in% c('1105', '1106', '1107', '1108', '1109', '1110', '1111', '1112') |
-    site == 'Mosaic' & point %in% c('1', '2', '596', '597', '602', '603', '604', '605', '606'))
-  ) %>% 
-  # group_by(site) %>% 
+  unnest('site') %>% 
+  left_join(ptrmv, by = 'site') %>% 
+  left_join(ptord, by = 'site') %>% 
+  left_join(revtyp, by = 'site') %>% 
+  left_join(cnvtyp, by = 'site') %>% 
   mutate(
-    # distance_m = c(0, sqrt(diff(northing)^2 + diff(easting)^2)), 
-    # distance_m = cumsum(distance_m),
-    easting = case_when(
-      site %in% tocnv ~ 3.28084 * easting, 
-      T ~ easting
-    ), 
-    northing = case_when(
-      site %in% tocnv ~ 3.28084 * northing, 
-      T ~ northing
-    )
+    data = purrr::pmap(list(data, ptrmv, ptord, revtyp,  cnvtyp), function(data, ptrmv, ptord, revtyp, cnvtyp){
+  
+        out <- data
+
+        # remove points
+        if(!anyNA(ptrmv))
+          out <- out %>% 
+            filter(!point %in% ptrmv)
+        
+        # reorder
+        if(!anyNA(ptord))
+          out <- out[rank(ptord, out$point), ]
+        
+        # reverse
+        if(revtyp)
+          out <- out[nrow(out):1, ]
+        
+        # convert m to ft
+        if(cnvtyp){
+          out$easting <- 3.28084 * out$easting
+          out$northing <- 3.28084 * out$northing
+        }
+        
+        # get distances
+        streast <- out$easting[1]
+        strnort <- out$northing[1]
+        out$distance_m <- sqrt((out$northing - strnort)^2 + (out$easting - streast)^2) / 3.28084
+        
+        return(out)
+        
+    })
   ) %>% 
+  select(site, data) %>% 
+  unnest('data') %>% 
   st_as_sf(coords = c('easting', 'northing'), crs = 2882) %>% 
   mutate(
     xlocft = st_coordinates(.)[, 1],
     ylocft = st_coordinates(.)[, 2]
   )
 
-mapview(tranloc) + mapview(trnstrstp, zcol = 'loc') + mapview(eledat, zcol = 'site')
-# # verify start direction from map
-# ptord <- list(
-#   `Big Bend - TECO` = c(), 
-#   `Cockroach Bay` = c(),
-#   `Fort DeSoto` = c(), 
-#   `Harbor Palms` = c(), 
-#   `Hidden Harbor` = c(), 
-#   `Little Manatee River`, 
-#   `Mosaic` (599, 598, 500:595), 
-#   `Upper Tampa Bay Park` = c(), 
-#   `Weedon Island` = c()
-# )
-
-
-mapview(tranloc) + mapview(trnstrstp, zcol = 'loc') + mapview(eledat, zcol = 'site')
-
-
-pdf('~/Desktop/cchalocs.pdf', height = 10, width = 10)
-
-for(stsel in site){
-  
-  toplo <- eledat %>% 
-    filter(site == stsel)
-  toplo2 <- trnstrstp %>% 
-    filter(site == stsel)
-  p <- ggplot(toplo, aes(x = xlocft, y = ylocft)) + 
-    geom_line(color = 'black') +
-    geom_text(aes(label = point), size = 2, color = 'red') + 
-    geom_point(data = toplo2, aes(color = loc)) + 
-    labs(
-      subtitle = stsel
-    )
-  
-  print(p)
-  
-}
-
-dev.off()
-
+# m <- mapview(tranloc) + mapview(trnstrstp, zcol = 'loc') + mapview(eledat, zcol = 'site')
+# m
+# # m %>% addStaticLabels(data = eledat, label = eledat$point)
+# 
+# ggplot(eledat, aes(x = distance_m, y = elevation_m)) + 
+#   geom_line() + 
+#   geom_point() + 
+#   facet_wrap(~site, scales = 'free')
