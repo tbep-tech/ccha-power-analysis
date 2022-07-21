@@ -6,9 +6,13 @@ library(here)
 
 load(url('https://github.com/tbep-tech/ccha-workflow/raw/main/data/vegdat.RData'))
 load(url('https://github.com/tbep-tech/ccha-workflow/raw/main/data/tranloc.RData'))
+load(url('https://github.com/tbep-tech/ccha-workflow/raw/main/data/trnstrstp.RData'))
+load(url('https://github.com/tbep-tech/ccha-workflow/raw/main/data/eledat.RData'))
 
 save(tranloc, file = here('data/tranloc.RData'))
 save(vegdat, file = here('data/vegdat.RData'))
+save(eledat, file = here('data/eledat.RData'))
+save(trnstrstp, file = here('data/trnstrstp.RData'))
 
 # create sub samples ------------------------------------------------------
 
