@@ -640,10 +640,11 @@ zonedsts <- downsmps %>%
         unique %>% 
         unite('zonefct', zone, zone_name, sep = ': ', remove = F) %>%
         group_by(zonefct, zone_name) %>% 
-        summarize(
-          dist = max(meter) - min(meter), 
-          .groups = 'drop'
-        ) 
+        filter(meter == max(meter)) %>% 
+        ungroup() %>% 
+        mutate(
+          dist = diff(c(0, meter))
+        )
       
     })
   ) %>% 
@@ -730,3 +731,78 @@ dev.off()
 jpeg(here('figs/zonevarex.jpg'), height = 7, width = 8, family = fml, units = 'in', res = 400)
 print(p3)
 dev.off()
+
+# estimates for each site
+
+sumdst <- zonedsts %>% 
+  group_by(site, sampint, zonefct) %>% 
+  summarize(
+    meandist = mean(dist, na.rm = T), 
+    vardist = var(dist, na.rm = T),
+    .groups = 'drop'
+  )
+
+actdst <- sumdst %>% 
+  filter(sampint == 0.5) 
+
+estdst <- sumdst %>% 
+  filter(sampint != 0.5) %>% 
+  group_by(site, sampint) %>% 
+  mutate(
+    meandist = cumsum(meandist)
+  )
+
+thm <- theme_ipsum(base_family = fml) +
+  theme(
+    panel.grid.minor = element_blank(),
+    # panel.grid.major.x = element_blank(),
+    axis.title.x = element_text(hjust = 0.5, size = 12),
+    axis.title.y = element_text(hjust = 0.5, size = 12),
+    legend.position = 'top', 
+    panel.grid.major = element_blank()
+  )
+
+dgd <- position_dodge2(width = 0.25)
+
+sites <- unique(sumdst$site)
+for(site in sites){
+  
+  toplo1 <- actdst %>% 
+    filter(site == !!site) %>% 
+    mutate(
+      zonefct = factor(zonefct)
+    ) 
+  toplo2 <- estdst %>% 
+    filter(site == !!site) %>% 
+    mutate(zonefct = factor(zonefct))
+  
+  cols <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  levs <- levels(toplo1$zonefct)
+  colin <- cols(length(levs))
+  names(colin) <- levs
+  
+  
+  p <- ggplot(toplo2, aes(x = sampint, y = meandist)) + 
+    geom_bar(data = toplo1, aes(fill = zonefct, x = 5), stat = 'identity', position = position_stack(reverse = TRUE), alpha = 0.7, width = 20) +
+    geom_point(position = dgd) + 
+    geom_errorbar(aes(ymin = meandist - (vardist / 2), ymax = meandist + (vardist / 2)), position = dgd, width = 0.25) +
+    scale_y_continuous(expand = c(0, 0)) +
+    scale_x_continuous(expand = c(0, 0), breaks = seq(1, 10, by = 0.5)) + 
+    labs(
+      x = 'Sampling distance every x meters', 
+      fill = 'Actual\nzone', 
+      y = 'Transect distance',
+      subtitle = site
+    ) +
+    coord_flip(xlim = c(0.5, 10.5)) + 
+    thm
+  
+  flnm <- paste0('figs/zoneest_', site, '.jpg')
+  jpeg(here(flnm), height = 5, width = 8, family = fml, units = 'in', res = 400)
+  print(p)
+  dev.off()
+  
+}

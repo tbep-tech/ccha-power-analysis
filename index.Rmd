@@ -285,7 +285,7 @@ column(12,
 knitr::include_graphics(here('figs/zonecnt.jpg'))
 ```
 
-The estimated length of each zone at each site is shown below with reductions in sample effort.  Each line represents a unique zone.  Estimated zone lengths decrease slightly with reduced effort.  Zones with zero length only have one sample, where distance is calculated as the difference from the first sample point and last sample point in a zone. Points are sized by the variance of the estimates across the random subsamples at level of sample effort. 
+The estimated length of each zone at each site is shown below with reductions in sample effort.  Each line represents a unique zone.  Estimated zone lengths do not change with reduced effort.  Points are sized by the variance of the estimates across the random subsamples at level of sample effort. Variance (or uncertainty) in the zone distances increases with reduced effort.
 
 ```{r}
 column(12, 
@@ -305,7 +305,7 @@ column(12,
 knitr::include_graphics(here('figs/zonedst.jpg'))
 ```
 
-The variance (or precision) of the distance estimates increases with reductions in effort, but the increase is not linear.  An example for Big Bend - TECO is shown below.  Although variance increase across the zones, the variance estimates fall to zero when the actual zone distance (facet label shown in meters) is divisible by the sample interval with no remainder.  Points of maximum variance are between intervals with no remainder. 
+The variance (or uncertainy) of the distance estimates increases with reductions in effort, but the increase is not linear.  An example for Big Bend - TECO is shown below.  Although variance increase across the zones, the variance estimates fall to zero when the actual zone distance (facet label shown in meters) is divisible by the sample interval with no remainder.  Points of maximum variance are between intervals with no remainder. 
 
 ```{r}
 column(12, 
@@ -323,6 +323,13 @@ column(12,
 
 ```{r}
 knitr::include_graphics(here('figs/zonevarex.jpg'))
+```
+
+Detailed results for each site:
+
+```{r}
+fls <- list.files(here('figs'), pattern = 'zoneest', full.names = T)
+knitr::include_graphics(fls)
 ```
 
 ## Conclusions
