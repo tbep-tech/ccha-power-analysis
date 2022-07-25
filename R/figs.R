@@ -142,7 +142,6 @@ dev.off()
 
 # richness estimates ------------------------------------------------------
 
-
 rchests <- downsmps %>%
   mutate(
     spprch = map(downsmp, function(downsmp){
@@ -170,7 +169,7 @@ toplo <- rchests %>%
   ) %>% 
   group_by(site, sample) %>% 
   mutate(
-    per = 100 * spprch / max(spprch)
+    per = 100 * (spprch - max(spprch)) / max(spprch) 
   ) %>% 
   group_by(site) %>% 
   nest() %>% 
@@ -263,7 +262,7 @@ p2 <- ggplot(toplo1, aes(x = sampint, y = per, group = sample, color = sample)) 
   scale_color_manual(values = cols) +
   thm + 
   labs(
-    y = 'Species richness estimate, % of total', 
+    y = 'Species richness estimate, % loss', 
     x = 'Sampling distance every x meters', 
     size = 'Variance with random subsample',
     color = NULL
@@ -275,7 +274,7 @@ tmp <- rchests %>%
   ) %>% 
   group_by(site, sample) %>% 
   mutate(
-    per = 100 * spprch / max(spprch)
+    per = 100 * (spprch - max(spprch)) / max(spprch)
   ) %>% 
   nest() %>% 
   mutate(
@@ -311,7 +310,7 @@ tmp <- rchests %>%
   unnest('lofit') %>% 
   group_by(site, sample, meanrich) %>% 
   summarise(
-    difv = max(perloess) - min(perloess), 
+    difv = min(perloess) - max(perloess), 
     .groups = 'drop'
   ) 
 
@@ -380,7 +379,7 @@ thm <- theme_ipsum(base_family = fml) +
 toplo <- rchzonests %>% 
   group_by(site, sample, zone_name) %>% 
   mutate(
-    per = 100 * spprch / max(spprch)
+    per = 100 * (spprch - max(spprch)) / max(spprch)
   ) %>% 
   group_by(zone_name) %>% 
   nest() %>% 
@@ -428,12 +427,11 @@ toplo2 <- toplo %>%
 levs <- toplo2 %>% 
   group_by(zone_name) %>% 
   summarise(
-    difv = max(perloess) - min(perloess), 
+    difv = min(perloess) - max(perloess), 
     .groups = 'drop'
   ) %>% 
   arrange(difv) %>% 
-  pull(zone_name) %>% 
-  rev
+  pull(zone_name)
 
 toplo1 <- toplo1 %>% 
   mutate(
@@ -461,7 +459,7 @@ p2 <- ggplot(toplo1, aes(x = sampint, y = per)) +
   facet_wrap(~zone_name) +
   thm + 
   labs(
-    y = 'Species richness estimate, % of total', 
+    y = 'Species richness estimate, % loss', 
     x = 'Sampling distance every x meters', 
     color = NULL
   )
@@ -481,24 +479,21 @@ p3 <- ggplot(toplo2, aes(x = sampint, y = perloess, group = zone_name, color = z
   scale_alpha_continuous(breaks = brks, range = c(0.6, 1)) +
   guides(color = 'none') +
   labs(
-    y = 'Species richness estimate, % of total', 
+    y = 'Species richness estimate, % loss', 
     x = 'Sampling distance every x meters', 
     alpha = 'Mean richness across sites, years', 
     size = 'Mean richness across sites, years'
   )
 
-toplo3 <- lbs %>% 
-  mutate(
-    totloss = 100 - perloess
-  )
+toplo3 <- lbs 
 
-mod <- lm(totloss ~ meanrich, data = toplo3) %>% 
+mod <- lm(perloess ~ meanrich, data = toplo3) %>% 
   summary() %>% 
   .$coefficients %>% 
   .[2, 4] %>% 
   format.pval(., eps = 0.05)
 
-p4 <- ggplot(toplo3, aes(x = meanrich, y = totloss)) + 
+p4 <- ggplot(toplo3, aes(x = meanrich, y =perloess)) + 
   geom_point(aes(color = zone_name)) + 
   geom_text_repel(aes(label = zone_name, color = zone_name), size = 2.5, segment.color = NA) +
   scale_color_manual(values = colfun(length(unique(toplo2$zone_name)))) +
@@ -759,7 +754,8 @@ thm <- theme_ipsum(base_family = fml) +
     axis.title.x = element_text(hjust = 0.5, size = 12),
     axis.title.y = element_text(hjust = 0.5, size = 12),
     legend.position = 'top', 
-    panel.grid.major = element_blank()
+    panel.grid.major = element_blank(), 
+    legend.text = element_text(size = 8)
   )
 
 dgd <- position_dodge2(width = 0.25)

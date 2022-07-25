@@ -75,7 +75,7 @@ column(12,
 knitr::include_graphics(here('figs/subsampex.jpg'))
 ```
 
-## Summaries {.tabset .tabset-dropdown}
+## Results {.tabset .tabset-dropdown}
 
 ### Richness estimates
 
@@ -325,7 +325,7 @@ column(12,
 knitr::include_graphics(here('figs/zonevarex.jpg'))
 ```
 
-Detailed results for each site:
+Detailed results for each site are shown below.  The shaded areas represent the true zones and the points show the estimates of the starting location for each zone at the specified sampling interval.  The horizontal bars show the variance across the sub-samples for each level of sampling effort. 
 
 ```{r}
 fls <- list.files(here('figs'), pattern = 'zoneest', full.names = T)
