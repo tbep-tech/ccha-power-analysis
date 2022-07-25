@@ -25,9 +25,9 @@ The CCHA power analysis evaluates the effect of reducing sampling effort for veg
 1. Total species richness at a site by vegetation zone
 1. Species frequency occurrence at a site
 1. Vegetation zone distances by site
-1. Elevation range at which 95% of key species occur (e.g., mangroves) 
+1. Elevation at which 95% of key species occur (e.g., mangroves) 
 
-The relative reduction in effort associated with each half-meter increase along a transect is shown below. 
+See the results tab for an assessment of the measures at reduced sampling effort. The relative reduction in effort associated with each half-meter increase along a transect is shown below. 
 
 ```{r}
 column(12, 
@@ -77,7 +77,7 @@ knitr::include_graphics(here('figs/subsampex.jpg'))
 
 ## Results {.tabset .tabset-dropdown}
 
-### Richness estimates
+### Richness
 
 These plots show the effect of down-sampling on richness estimates at each site, grouped by year of sampling.  The top plot shows points as the average estimate at each down-sampled survey for the sampling distance shown on the x-axis.  The lines are polynomial smooths to show the trend.  The size of each point is in proportion to the variance of the species richness estimate for each random sub-sample at the specified level of sampling.  Facets are arranged based on the greatest reduction in species richness as a percentage of the total.
 
@@ -139,7 +139,7 @@ column(12,
 knitr::include_graphics(here('figs/richloss.jpg'))
 ```
 
-### Richness estimates by zone
+### Richness by zone
 
 These plots show richness estimates for different zones with a reduction of sample effort.  The lines show the estimated reduction in the richness estimate for each site and the thick line is the average trend across all sites for each zone (points are not shown to reduce clutter).  The panels are arranged based on the greatest percent reduction in richness from full to minimum effort across all sites in a zone.
 
@@ -221,7 +221,7 @@ column(12,
 knitr::include_graphics(here('figs/richzoneloss.jpg'))
 ```
 
-### Frequency occurrence estimates
+### Frequency occurrence
 
 The plot below shows the estimated change in frequency occurrence with reduced sample effort at each site and sample year. Each line shows a different species (labels are not included to reduce plot clutter).  The points are sized in proportion to the variance across the random subsamples at the specified level of effort.   
 
@@ -263,7 +263,7 @@ column(12,
 knitr::include_graphics(here('figs/fovarex.jpg'))
 ```
 
-### Zone counts and distances
+### Zone distances
 
 Estimates of the counts and distances for each zone along the transects are shown below for reductions in sample effort.  The first plot shows the number of unique zones identified with down-sampling.  All zones are identified at each site for all levels of sample effort.
 
@@ -332,6 +332,88 @@ fls <- list.files(here('figs'), pattern = 'zoneest', full.names = T)
 knitr::include_graphics(fls)
 ```
 
+### Elevation
+
+These plots show elevation estimates for mangrove species (black mangrove *Avicennia germinans*, white mangrove *Laguncularia racemosa*, red mangrove *Rhizophore mangle*) with reductions in sampling every 0.5 m to every 10 m.  For each level of sampling effort, the estimated elevation at which 95% of each species occurs is shown for each site.  The variance in the estimated elevation is also shown for the repeated subsamples at each level of effort.  Overall, the elevation estimates show a decrease with reductions in effort, although differences are observed for each species and site.
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/elevex.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/elevex.jpg'))
+```
+
+These plots are similar to the above, except the total elevation change for each species at each site is shown as percent change. This provides a comparison of changes where differences may be observed by starting elevation above sea level.  
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/elevperex.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r}
+knitr::include_graphics(here('figs/elevperex.jpg'))
+```
+
+This plot shows that the change in the elevation estimate is a function of frequency occurrence.  Species at a site with greater frequency occurrence are impacated less by reductions in sampling effort. 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/foperelevex.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r, out.width = '70%'}
+knitr::include_graphics(here('figs/foperelevex.jpg'))
+```
+
+Similar to the above, this plot shows that the variance (or certainty) in the elevation estimate is a function of frequency occurrence.  Elevation estimates are more precise for species at a site with greater frequency occurrence. 
+
+```{r}
+column(12, 
+  column(3, 
+    download_file(
+      path = here('figs/fovarelevex.jpg'),
+      button_label = "Download plot",
+      button_type = "warning",
+      has_icon = TRUE,
+      icon = "fa fa-save"
+      )
+  )
+)
+```
+
+```{r, out.width = '70%'}
+knitr::include_graphics(here('figs/fovarelevex.jpg'))
+```
+
 ## Conclusions
 
 * Richness estimates for a site are reduced with lower sample effort
@@ -342,5 +424,6 @@ knitr::include_graphics(fls)
 * Species with higher frequency occurrence will have less precise estimates with reduced effort compared to those with lower frequency occurrence
 * Zone identification at each site is not affected by sample effort, although distance estimates decrease slightly.  
 * Precision of the distance estimates for each zone decreases with reductions in sample effort, but the decrease is not linear and is affected by the actual zone length and sample interval
+* The estimated elevation at which mangrove species are observed will decrease with reductions in sampling effort.  The magnitude and uncertainty of the reduction will increase for species with lower frequency occurrence at a site.
 
 <script type="text/javascript" src="js/iframeResizer.contentWindow.min.js"></script>

@@ -802,3 +802,172 @@ for(site in sites){
   dev.off()
   
 }
+
+# mangrove elevation distribution -------------------------------------------------------------
+
+mangspp <- c('Avicennia germinans', 'Laguncularia racemosa', 'Rhizophora mangle')
+
+mangests <- downsmps %>%
+  filter(sample == 1) %>% 
+  mutate(
+    mangest = purrr::map(downsmp, function(x){
+      x %>% 
+        filter(species %in% mangspp) %>% 
+        group_by(species) %>% 
+        summarise(
+          est = quantile(elevation_m, 0.95)
+        )
+      
+    })
+  ) %>% 
+  select(-downsmp) %>% 
+  unnest(mangest)
+
+thm <- theme_ipsum(base_family = fml) +
+  theme(
+    panel.grid.minor = element_blank(),
+    # panel.grid.major.x = element_blank(),
+    axis.title.x = element_text(hjust = 0.5, size = 12),
+    axis.title.y = element_text(hjust = 0.5, size = 12),
+    legend.position = 'top', 
+    strip.text = element_text(size = 9),
+    legend.box="vertical"
+  )
+
+toplo <- mangests %>% 
+  group_by(site, sampint, species) %>% 
+  summarise(
+    aveest = mean(est),
+    varest = var(est), 
+    .groups = 'drop'
+  ) %>% 
+  mutate(
+    varest = ifelse(is.na(varest), 0, varest)
+  ) 
+
+p1 <- ggplot(toplo, aes(x = sampint, y = aveest, color = species)) +
+  facet_wrap(~ site, scales = 'free_y') +
+  geom_point(aes(size = varest)) + 
+  # geom_line()  +
+  geom_smooth(se = F) + 
+  thm + 
+  labs(
+    y = 'Elevation (m) at 95% occurrence', 
+    x = 'Sampling distance every x meters', 
+    size = 'Variance across random subsamples',
+    color = NULL
+  )
+
+maxeff <- toplo %>% 
+  filter(sampint == 0.5) %>% 
+  select(site, species, maxest = aveest)
+toplo2 <- toplo %>% 
+  left_join(maxeff, by = c('site', 'species')) %>% 
+  mutate(
+    aveestper = 100 * (aveest - maxest)/ abs(maxest)
+  )
+
+p2 <- ggplot(toplo2, aes(x = sampint, y = aveestper, color = species)) +
+  facet_wrap(~ site, scales = 'free_y') +
+  geom_point(aes(size = varest)) + 
+  # geom_line()  +
+  geom_smooth(se = F)+
+  thm + 
+  labs(
+    y = 'Elevation (m) at 95% occurrence, % loss', 
+    x = 'Sampling distance every x meters', 
+    size = 'Variance across random subsamples',
+    color = NULL
+  )
+
+allfo <- downsmps %>% 
+  filter(sample == 1) %>% 
+  filter(sampint == 0.5) %>% 
+  mutate(
+    foest = purrr::map(downsmp, function(x){
+      
+      x %>% 
+        mutate(
+          pa = ifelse(pcent_basal_cover > 0, 1, 0)
+        ) %>%
+        select(-pcent_basal_cover) %>% 
+        mutate(cnt = length(unique(meter))) %>% 
+        unique %>%
+        filter(species %in% mangspp) %>% 
+        group_by(species) %>% 
+        summarise(
+          foest = sum(pa) / unique(cnt), 
+          .groups = 'drop'
+        )
+      
+    })
+  ) %>% 
+  select(-downsmp) %>% 
+  unnest(foest) %>% 
+  ungroup() %>% 
+  select(site, species, foest)
+
+toplo3 <- toplo2 %>% 
+  group_by(site, species) %>% 
+  summarise(
+    difave = min(aveestper) - max(aveestper),
+    maxvar = max(varest),
+    .groups = 'drop'
+  ) %>% 
+  left_join(allfo, by = c('site', 'species')) %>% 
+  filter(difave > -500 & difave < 0)
+
+mod <- lm(log10(-1 * difave) ~ foest, data = toplo3) %>% 
+  summary() %>% 
+  .$coefficients %>% 
+  .[2, 4] %>% 
+  format.pval(., eps = 0.05)
+
+p3 <- ggplot(toplo3, aes(x = foest, y = -1 * difave)) + 
+  geom_point(aes(color = species)) + 
+  geom_smooth(method = 'lm' , se = T) + 
+  scale_y_log10() + 
+  thm + 
+  labs(
+    x = 'Actual frequency occurrence',
+    y = 'Total % change in elevation\n0.5 m to 10 m sampling (log-transformed)', 
+    color = NULL,
+    subtitle = 'Change in elevation estimate with frequency occurrence',
+    caption = paste('Model significant, p ', mod)
+  )
+
+mod <- lm(log10(maxvar) ~ foest, data = toplo3) %>% 
+  summary() %>% 
+  .$coefficients %>% 
+  .[2, 4] %>% 
+  format.pval(., eps = 0.05)
+
+p4 <- ggplot(toplo3, aes(x = foest, y = maxvar)) + 
+  geom_point(aes(color = species)) +
+  scale_y_log10() + 
+  geom_smooth(method = 'lm', se = T) + 
+  thm + 
+  labs(
+    x = 'Actual frequency occurrence',
+    y = 'Final variance at 10 m sampling (log-transformed)', 
+    color = NULL,
+    subtitle = 'Variance of elevation estimate with reduced effort',
+    caption = paste('Model significant, p ', mod)
+  )
+
+jpeg(here('figs/elevex.jpg'), height = 7.5, width = 9, family = fml, units = 'in', res = 400)
+print(p1)
+dev.off()
+
+jpeg(here('figs/elevperex.jpg'), height = 7.5, width = 9, family = fml, units = 'in', res = 400)
+print(p2)
+dev.off()
+
+jpeg(here('figs/foperelevex.jpg'), height = 6, width = 6.5, family = fml, units = 'in', res = 400)
+print(p3)
+dev.off()
+
+jpeg(here('figs/fovarelevex.jpg'), height = 6, width = 6.5, family = fml, units = 'in', res = 400)
+print(p4)
+dev.off()
+
